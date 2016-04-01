@@ -1,4 +1,4 @@
-#include <echo_callback.hh>
+#include <echo.hh>
 
 #ifdef HAVE_STD
 #  include <iostream>
@@ -7,6 +7,7 @@
 #  include <iostream.h>
 #endif
 
+static CORBA::Boolean bindObjectToName(CORBA::ORB_ptr, CORBA::Object_ptr);
 
 static CORBA::ORB_ptr orb;
 static int            dying = 0;
@@ -146,17 +147,19 @@ int main(int argc, char** argv)
     {
       CORBA::Object_var obj = orb->resolve_initial_references("RootPOA");
       PortableServer::POA_var poa = PortableServer::POA::_narrow(obj);
+      
       PortableServer::POAManager_var pman = poa->the_POAManager();
       pman->activate();
 
       server_i* myserver = new server_i();
       obj = myserver->_this();             // *implicit activation*
-      myserver->_remove_ref();
       
-      CORBA::String_var sior(orb->object_to_string(obj));
       if( !bindObjectToName(orb, obj) )
-      return 1;
+      	return 1;
+      
+      myserver->_remove_ref();
 
+      CORBA::String_var sior(orb->object_to_string(obj));
       cout << (char*) sior << endl;
       orb->run();
     }
@@ -173,6 +176,7 @@ int main(int argc, char** argv)
   return 0;
 }
 
+//////////////////////////////////////////////////////////////////////
 
 static CORBA::Boolean
 bindObjectToName(CORBA::ORB_ptr orb, CORBA::Object_ptr objref)
